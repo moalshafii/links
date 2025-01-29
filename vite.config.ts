@@ -2,5 +2,5 @@ import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [tailwindcss()],
-  base: "/links/",
+  base: process.env.BASE_PATH || "/", // GitHub Pages needs this
 });
