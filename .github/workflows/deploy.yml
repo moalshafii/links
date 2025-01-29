@@ -18,41 +18,73 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Job to install pnpm and dependencies
+  install-pnpm:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      # Install pnpm using pnpm/action-setup
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10  # You can specify the version of pnpm you need
+
+      # Set up Node.js with pnpm caching
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
-      # Ensure pnpm is available by using corepack
-      - name: Enable corepack and activate pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
-
+      # Install dependencies using pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+  # Job for building and deploying to GitHub Pages
+  deploy:
+    needs: install-pnpm  # Ensure this job runs after the install-pnpm job
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Ensure pnpm is available
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10  # Specify the version of pnpm
+
+      # Set up Node.js for the selected version
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # Install dependencies using pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Build the project
       - name: Build
         run: pnpm run build
 
+      # Configure Pages
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      # Upload build artifacts
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
 
+      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
