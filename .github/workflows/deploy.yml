@@ -1,4 +1,4 @@
-name: Deploy To Pages
+name: Deploy static content to Pages
 
 on:
   # Runs on pushes targeting the default branch
@@ -33,9 +33,11 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      # Install pnpm explicitly
-      - name: Install pnpm
-        run: npm install -g pnpm
+      # Ensure pnpm is available by using corepack
+      - name: Enable corepack and activate pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
